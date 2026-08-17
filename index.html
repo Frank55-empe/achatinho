@@ -1,0 +1,2302 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Carregando... — Planiloja Achadinhos</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link
+    href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&display=swap"
+    rel="stylesheet">
+  <style>
+    /* ============================================
+   CSS VARIABLES — Defaults (overridden by spreadsheet)
+   ============================================ */
+    :root {
+      --primary: #2A5C3F;
+      --primary-rgb: 42, 92, 63;
+      --primary-light: rgba(42, 92, 63, 0.08);
+      --primary-hover: #1E4530;
+      --secondary: #1B1B1B;
+      --secondary-hover: #000000;
+      --secondary-light: rgba(27, 27, 27, 0.08);
+      --bg: #FAFAF8;
+      --white: #FFFFFF;
+      --gray-50: #F7F7F5;
+      --gray-100: #EFEFEC;
+      --gray-200: #E0DED9;
+      --gray-300: #C8C5BE;
+      --gray-400: #A8A49C;
+      --gray-500: #87837A;
+      --gray-600: #6B6760;
+      --gray-700: #4A4740;
+      --gray-800: #2D2B27;
+      --text: #1B1B1B;
+      --text-muted: #6B6760;
+      --text-light: #87837A;
+      --radius: 10px;
+      --radius-sm: 6px;
+      --radius-lg: 14px;
+      --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.06);
+      --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.08);
+      --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.1);
+      --shadow-xl: 0 16px 48px rgba(0, 0, 0, 0.12);
+      --transition: 0.2s ease;
+      --font: 'DM Sans', -apple-system, sans-serif;
+    }
+
+    /* ============================================
+   RESET & BASE
+   ============================================ */
+    *,
+    *::before,
+    *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    html, body {
+      overflow-x: hidden;
+      max-width: 100vw;
+    }
+
+    body.modal-open {
+      position: fixed;
+      width: 100%;
+      height: 100%;
+    }
+
+    body {
+      font-family: var(--font);
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    img {
+      max-width: 100%;
+      display: block;
+    }
+
+    button {
+      cursor: pointer;
+      font-family: var(--font);
+      border: none;
+    }
+
+    input,
+    select,
+    textarea {
+      font-family: var(--font);
+    }
+
+    a {
+      color: inherit;
+      text-decoration: none;
+    }
+
+    /* ============================================
+   LOADING SCREEN
+   ============================================ */
+    .loading-screen {
+      position: fixed;
+      inset: 0;
+      background: var(--bg);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      z-index: 9999;
+      transition: opacity 0.4s ease;
+    }
+
+    .loading-screen.hidden {
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .loading-spinner {
+      width: 40px;
+      height: 40px;
+      border: 3px solid var(--gray-200);
+      border-top-color: var(--primary);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+
+    @keyframes spin {
+      to {
+        transform: rotate(360deg);
+      }
+    }
+
+    .loading-text {
+      margin-top: 16px;
+      font-size: 0.9rem;
+      color: var(--text-muted);
+    }
+
+    /* ============================================
+   ERROR SCREEN
+   ============================================ */
+    .error-screen {
+      display: none;
+      max-width: 500px;
+      margin: 80px auto;
+      padding: 40px;
+      text-align: center;
+      background: var(--white);
+      border-radius: var(--radius-lg);
+      border: 1px solid var(--gray-200);
+    }
+
+    .error-screen.show {
+      display: block;
+    }
+
+    .error-screen h2 {
+      font-size: 1.2rem;
+      margin-bottom: 8px;
+    }
+
+    .error-screen p {
+      color: var(--text-muted);
+      font-size: 0.9rem;
+    }
+
+    .top-bar {
+      background: var(--top-bar-bg, var(--primary));
+      color: var(--white);
+      text-align: center;
+      padding: 8px 20px;
+      font-size: 0.82rem;
+      font-weight: 500;
+      letter-spacing: 0.01em;
+      display: none;
+    }
+    .top-bar.show { display: block; }
+
+    /* ============================================
+   HEADER
+   ============================================ */
+    .header {
+      background: var(--white);
+      border-bottom: 1px solid var(--gray-200);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    .header-inner {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      height: 68px;
+      gap: 16px;
+    }
+
+    .header-logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-shrink: 0;
+    }
+
+    .header-logo img {
+      max-height: 44px;
+      max-width: 160px;
+      width: auto;
+      height: auto;
+      border-radius: 6px;
+      object-fit: contain;
+    }
+
+    .header-logo span {
+      font-weight: 700;
+      font-size: 1.15rem;
+      color: #1B1B1B;
+      letter-spacing: -0.02em;
+    }
+
+    .search-clear {
+      display: none !important;
+    }
+    .search-clear.show {
+      display: flex !important;
+    }
+
+    .search-bar {
+      flex: 1;
+      max-width: 420px;
+      position: relative;
+    }
+
+    .search-bar input {
+      width: 100%;
+      padding: 10px 36px 10px 42px;
+      border: 1.5px solid var(--gray-200);
+      border-radius: 50px;
+      font-size: 0.9rem;
+      background: var(--gray-50);
+      transition: var(--transition);
+      color: var(--text);
+      outline: none;
+    }
+
+    .search-bar input:focus {
+      border-color: var(--primary);
+      background: var(--white);
+      box-shadow: 0 0 0 3px var(--primary-light);
+    }
+
+    .search-bar input::placeholder {
+      color: var(--gray-400);
+    }
+
+    .search-bar svg {
+      position: absolute;
+      left: 14px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--gray-400);
+      width: 18px;
+      height: 18px;
+    }
+
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-shrink: 0;
+    }
+
+    .channel-btn {
+      display: none;
+      align-items: center;
+      gap: 8px;
+      background: #25D366;
+      color: var(--white);
+      padding: 10px 16px;
+      border-radius: 50px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      transition: var(--transition);
+      white-space: nowrap;
+    }
+
+    .channel-btn.show {
+      display: flex;
+    }
+
+    .channel-btn:hover {
+      filter: brightness(0.93);
+      transform: translateY(-1px);
+    }
+
+    .channel-btn.telegram {
+      background: #229ED9;
+    }
+
+    .channel-btn svg {
+      width: 18px;
+      height: 18px;
+      flex-shrink: 0;
+    }
+
+    .search-toggle {
+      display: none;
+      background: none;
+      color: var(--gray-700);
+      padding: 8px;
+    }
+
+    .search-toggle svg {
+      width: 22px;
+      height: 22px;
+    }
+
+    /* ============================================
+   CATEGORY NAV
+   ============================================ */
+    .cat-nav {
+      background: var(--white);
+      border-bottom: 1px solid var(--gray-100);
+    }
+
+    .cat-nav-inner {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 20px;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+      scrollbar-width: none;
+    }
+
+    .cat-nav-inner::-webkit-scrollbar {
+      display: none;
+    }
+
+    .cat-btn {
+      padding: 12px 18px;
+      font-size: 0.88rem;
+      font-weight: 500;
+      color: var(--text-muted);
+      background: none;
+      white-space: nowrap;
+      border-bottom: 2px solid transparent;
+      transition: var(--transition);
+      letter-spacing: -0.01em;
+    }
+
+    .cat-btn:hover {
+      color: var(--text);
+    }
+
+    .cat-btn.active {
+      color: var(--primary);
+      border-bottom-color: var(--primary);
+      font-weight: 600;
+    }
+
+    /* ============================================
+   SUBCATEGORY FILTER
+   ============================================ */
+    .subcat-bar {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 16px 20px 0;
+      display: none;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .subcat-bar.show {
+      display: flex;
+    }
+
+    .subcat-btn {
+      padding: 7px 16px;
+      font-size: 0.82rem;
+      font-weight: 500;
+      background: var(--white);
+      border: 1.5px solid var(--gray-200);
+      border-radius: 50px;
+      color: var(--text-muted);
+      transition: var(--transition);
+    }
+
+    .subcat-btn:hover {
+      border-color: var(--primary);
+      color: var(--primary);
+    }
+
+    .subcat-btn.active {
+      background: var(--primary);
+      border-color: var(--primary);
+      color: var(--white);
+    }
+
+    /* ============================================
+   BANNER
+   ============================================ */
+    .banner {
+      max-width: 1200px;
+      margin: 20px auto;
+      padding: 0 20px;
+      display: none;
+    }
+
+    .banner.show {
+      display: block;
+    }
+
+    .banner a,
+    .banner div.banner-wrap {
+      display: block;
+      border-radius: var(--radius-lg);
+      overflow: hidden;
+      position: relative;
+    }
+
+    .banner-img {
+      width: 100%;
+      height: 260px;
+      object-fit: cover;
+      display: block;
+    }
+
+    .banner-overlay {
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(135deg, rgba(var(--primary-rgb), 0.85) 0%, rgba(var(--primary-rgb), 0.3) 60%, transparent 100%);
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      padding: 40px 48px;
+    }
+
+    .banner-tag {
+      font-size: 0.75rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: rgba(255, 255, 255, 0.8);
+      margin-bottom: 8px;
+    }
+
+    .banner-title {
+      font-size: 1.8rem;
+      font-weight: 700;
+      color: var(--white);
+      letter-spacing: -0.03em;
+      line-height: 1.2;
+      margin-bottom: 6px;
+    }
+
+    .banner-sub {
+      font-size: 0.95rem;
+      color: rgba(255, 255, 255, 0.85);
+    }
+
+    /* ============================================
+   PRODUCTS GRID
+   ============================================ */
+    .main {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 24px 20px 80px;
+    }
+
+    .section-header {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      margin-bottom: 20px;
+    }
+
+    .section-title {
+      font-size: 1.3rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      color: var(--secondary);
+    }
+
+    .product-count {
+      font-size: 0.85rem;
+      color: var(--text-light);
+    }
+
+    .products-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 18px;
+    }
+
+    .product-card {
+      background: var(--white);
+      border-radius: var(--radius-lg);
+      overflow: hidden;
+      border: 1px solid var(--gray-100);
+      transition: var(--transition);
+      cursor: pointer;
+      position: relative;
+    }
+
+    .product-card:hover {
+      box-shadow: var(--shadow-md);
+      transform: translateY(-2px);
+      border-color: var(--gray-200);
+    }
+
+    .product-img-wrap {
+      position: relative;
+      aspect-ratio: 1;
+      overflow: hidden;
+      background: var(--gray-50);
+    }
+
+    .product-img-wrap img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      transition: transform 0.4s ease;
+    }
+
+    .product-card:hover .product-img-wrap img {
+      transform: scale(1.05);
+    }
+
+    .badge-promo {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      background: #E53E3E;
+      color: white;
+      font-size: 0.7rem;
+      font-weight: 700;
+      padding: 4px 10px;
+      border-radius: 50px;
+      letter-spacing: 0.02em;
+      text-transform: uppercase;
+    }
+
+    .product-info {
+      padding: 14px 16px 16px;
+    }
+
+    .product-cat {
+      font-size: 0.73rem;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--text-light);
+      font-weight: 500;
+      margin-bottom: 4px;
+    }
+
+    .product-name {
+      font-size: 0.95rem;
+      font-weight: 600;
+      color: var(--secondary);
+      margin-bottom: 8px;
+      letter-spacing: -0.01em;
+      line-height: 1.3;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+
+    .product-price {
+      display: flex;
+      align-items: baseline;
+      gap: 8px;
+      row-gap: 0;
+      flex-wrap: wrap;
+      margin-bottom: 12px;
+    }
+
+    .price-current {
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: var(--primary);
+      white-space: nowrap;
+    }
+
+    .price-old {
+      font-size: 0.85rem;
+      color: var(--gray-400);
+      text-decoration: line-through;
+      white-space: nowrap;
+    }
+
+    .btn-details {
+      width: 100%;
+      padding: 10px;
+      background: var(--gray-50);
+      border: 1.5px solid var(--gray-200);
+      border-radius: var(--radius);
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: var(--text);
+      transition: var(--transition);
+    }
+
+    .btn-details:hover {
+      background: var(--primary);
+      border-color: var(--primary);
+      color: var(--white);
+    }
+
+    .no-results {
+      grid-column: 1 / -1;
+      text-align: center;
+      padding: 60px 20px;
+      color: var(--text-light);
+    }
+
+    .no-results svg {
+      width: 48px;
+      height: 48px;
+      margin: 0 auto 12px;
+      color: var(--gray-300);
+    }
+
+    /* ============================================
+   PRODUCT DETAIL MODAL
+   ============================================ */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.5);
+      backdrop-filter: blur(4px);
+      z-index: 200;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    .modal-overlay.open {
+      display: flex;
+    }
+
+    @keyframes slideUp {
+      from {
+        opacity: 0;
+        transform: translateY(20px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .modal {
+      background: var(--white);
+      border-radius: var(--radius-lg);
+      max-width: 800px;
+      width: 100%;
+      max-height: 90vh;
+      overflow-y: auto;
+      animation: slideUp 0.3s ease;
+      position: relative;
+    }
+
+    .modal-close {
+      position: absolute;
+      top: 16px;
+      right: 16px;
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      background: var(--white);
+      border: 1px solid var(--gray-200);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 10;
+      color: var(--gray-600);
+      transition: var(--transition);
+      box-shadow: var(--shadow-sm);
+    }
+
+    .modal-close:hover {
+      background: var(--gray-50);
+    }
+
+    .modal-close svg {
+      width: 18px;
+      height: 18px;
+    }
+
+    .modal-body {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+    }
+
+    .modal-left {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .modal-gallery {
+      aspect-ratio: 1;
+      background: var(--gray-50);
+      overflow: hidden;
+    }
+
+    .modal-gallery img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .gallery-thumbs {
+      display: flex;
+      gap: 8px;
+      padding: 12px 16px;
+      justify-content: center;
+      background: var(--gray-50);
+      border-top: 1px solid var(--gray-200);
+    }
+
+    .gallery-thumb {
+      width: 56px;
+      height: 56px;
+      border-radius: 8px;
+      overflow: hidden;
+      border: 2px solid transparent;
+      cursor: pointer;
+      opacity: 0.6;
+      transition: all 0.2s ease;
+      background: var(--white);
+      flex-shrink: 0;
+    }
+    .gallery-thumb:hover { opacity: 0.9; }
+    .gallery-thumb.active { border-color: var(--primary); opacity: 1; }
+    .gallery-thumb img { width: 100%; height: 100%; object-fit: cover; }
+
+    .modal-details {
+      padding: 32px;
+      display: flex;
+      flex-direction: column;
+      overflow-y: auto;
+      max-height: 100%;
+    }
+
+    .modal-cat {
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--primary);
+      font-weight: 600;
+      margin-bottom: 8px;
+    }
+
+    .modal-name {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--secondary);
+      letter-spacing: -0.03em;
+      line-height: 1.25;
+      margin-bottom: 12px;
+    }
+
+    .modal-price {
+      display: flex;
+      align-items: baseline;
+      gap: 10px;
+      margin-bottom: 16px;
+    }
+
+    .modal-price .price-current {
+      font-size: 1.5rem;
+    }
+
+    .modal-price .price-old {
+      font-size: 1rem;
+    }
+
+    .modal-desc {
+      font-size: 0.9rem;
+      color: var(--text-muted);
+      line-height: 1.65;
+      margin-bottom: 24px;
+      flex: 1;
+      white-space: pre-line;
+    }
+
+    .coupon-box {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      border: 1.5px dashed var(--primary);
+      background: var(--primary-light);
+      border-radius: var(--radius);
+      padding: 12px 14px;
+      margin-bottom: 20px;
+    }
+
+    .coupon-label {
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--text-muted);
+      margin-bottom: 2px;
+    }
+
+    .coupon-code {
+      font-size: 1.05rem;
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      color: var(--primary);
+    }
+
+    .coupon-copy {
+      background: var(--primary);
+      color: var(--white);
+      padding: 9px 14px;
+      border-radius: var(--radius-sm);
+      font-size: 0.78rem;
+      font-weight: 600;
+      white-space: nowrap;
+      transition: var(--transition);
+    }
+
+    .coupon-copy:hover {
+      background: var(--primary-hover);
+    }
+
+    .video-embed {
+      position: relative;
+      width: 100%;
+      aspect-ratio: 16/9;
+      border-radius: var(--radius);
+      overflow: hidden;
+      background: #000;
+      margin-bottom: 20px;
+    }
+
+    .video-embed iframe {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      border: 0;
+    }
+
+    .btn-cta {
+      width: 100%;
+      padding: 15px;
+      background: var(--primary);
+      color: var(--white);
+      border-radius: var(--radius);
+      font-size: 1rem;
+      font-weight: 700;
+      transition: var(--transition);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      position: relative;
+      z-index: 2;
+    }
+
+    .btn-cta:hover {
+      background: var(--primary-hover);
+      transform: translateY(-1px);
+      box-shadow: var(--shadow-md);
+    }
+
+    .price-note {
+      display: none;
+      font-size: 0.72rem;
+      color: var(--text-light);
+      text-align: center;
+      margin-top: 10px;
+    }
+
+    .price-note.show {
+      display: block;
+    }
+
+    .badge-platform {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      background: rgba(0, 0, 0, 0.65);
+      color: var(--white);
+      font-size: 0.68rem;
+      font-weight: 600;
+      padding: 4px 10px;
+      border-radius: 50px;
+      letter-spacing: 0.02em;
+      backdrop-filter: blur(2px);
+      max-width: 46%;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .badge-limited {
+      position: absolute;
+      bottom: 10px;
+      left: 10px;
+      background: #B45309;
+      color: var(--white);
+      font-size: 0.62rem;
+      font-weight: 700;
+      padding: 4px 8px;
+      border-radius: var(--radius-sm);
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+
+    .channel-float {
+      position: fixed;
+      bottom: 24px;
+      left: 24px;
+      width: 54px;
+      height: 54px;
+      border-radius: 50%;
+      background: #25D366;
+      color: var(--white);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      box-shadow: var(--shadow-lg);
+      z-index: 60;
+      transition: all 0.3s ease;
+    }
+
+    .channel-float.show {
+      display: flex;
+    }
+
+    .channel-float:hover {
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-xl);
+    }
+
+    .channel-float.telegram {
+      background: #229ED9;
+    }
+
+    .channel-float svg {
+      width: 26px;
+      height: 26px;
+    }
+
+    body.has-channel-float .back-to-top {
+      bottom: 88px;
+    }
+
+    .footer-disclosure {
+      max-width: 640px;
+      margin: 0 auto 12px;
+      font-size: 0.75rem;
+      line-height: 1.5;
+      opacity: 0.75;
+    }
+
+    /* ============================================
+   FOOTER
+   ============================================ */
+    .footer {
+      background: #1B1B1B;
+      color: rgba(255,255,255,0.5);
+      padding: 36px 20px;
+      text-align: center;
+    }
+    .footer-name {
+      font-size: 1rem;
+      font-weight: 600;
+      color: #FFFFFF;
+      margin-bottom: 12px;
+    }
+    .footer-socials {
+      display: flex;
+      justify-content: center;
+      gap: 16px;
+      margin-bottom: 16px;
+    }
+    .footer-socials a {
+      width: 38px;
+      height: 38px;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.15);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: rgba(255,255,255,0.7);
+      transition: all 0.2s ease;
+    }
+    .footer-socials a:hover {
+      background: var(--primary);
+      color: #FFFFFF;
+    }
+    .footer-socials svg { width: 18px; height: 18px; }
+    .footer-credit {
+      font-size: 0.78rem;
+      color: rgba(255,255,255,0.35);
+    }
+
+    /* Toast */
+    .toast {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      background: var(--white);
+      border: 1px solid var(--gray-200);
+      padding: 14px 18px;
+      border-radius: var(--radius-lg);
+      font-size: 0.88rem;
+      font-weight: 500;
+      z-index: 150;
+      box-shadow: var(--shadow-xl);
+      transform: translateY(20px);
+      opacity: 0;
+      transition: all 0.3s ease;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      max-width: 340px;
+      color: var(--text);
+    }
+    .toast.show { opacity: 1; transform: translateY(0); }
+    .toast-img {
+      width: 48px;
+      height: 48px;
+      border-radius: var(--radius);
+      object-fit: cover;
+      flex-shrink: 0;
+    }
+    .toast-content { flex: 1; min-width: 0; }
+    .toast-title {
+      font-size: 0.82rem;
+      font-weight: 700;
+      color: var(--text);
+      margin-bottom: 2px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .toast-subtitle {
+      font-size: 0.78rem;
+      color: var(--text-light);
+    }
+
+
+
+
+    .btn-copy-link {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 5px;
+      background: none;
+      border: none;
+      font-size: 0.78rem;
+      font-weight: 500;
+      color: var(--text-light);
+      cursor: pointer;
+      padding: 6px 0;
+      margin-top: 6px;
+      transition: all 0.2s ease;
+      position: relative;
+      z-index: 1;
+      width: fit-content;
+      margin-left: auto;
+      margin-right: auto;
+    }
+    .btn-copy-link:hover { color: var(--primary); }
+    .btn-copy-link.copied { color: var(--primary); font-weight: 600; }
+    .btn-copy-link svg { width: 14px; height: 14px; }
+
+    @keyframes cardFadeIn {
+      from { opacity: 0; transform: translateY(12px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .product-card { animation: cardFadeIn 0.4s ease both; }
+    .product-card:nth-child(1) { animation-delay: 0.03s; }
+    .product-card:nth-child(2) { animation-delay: 0.06s; }
+    .product-card:nth-child(3) { animation-delay: 0.09s; }
+    .product-card:nth-child(4) { animation-delay: 0.12s; }
+    .product-card:nth-child(5) { animation-delay: 0.15s; }
+    .product-card:nth-child(6) { animation-delay: 0.18s; }
+    .product-card:nth-child(7) { animation-delay: 0.21s; }
+    .product-card:nth-child(8) { animation-delay: 0.24s; }
+
+    .back-to-top {
+      position: fixed;
+      bottom: 24px;
+      left: 24px;
+      width: 44px;
+      height: 44px;
+      background: var(--white);
+      border: 1px solid var(--gray-200);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--gray-500);
+      cursor: pointer;
+      box-shadow: var(--shadow-md);
+      transition: all 0.3s ease;
+      opacity: 0;
+      pointer-events: none;
+      z-index: 50;
+    }
+    .back-to-top.show { opacity: 1; pointer-events: auto; }
+    .back-to-top:hover {
+      background: var(--primary);
+      border-color: var(--primary);
+      color: var(--white);
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-lg);
+    }
+    .back-to-top svg { width: 20px; height: 20px; }
+
+    #featuredSection {
+      background: var(--primary-light);
+      border-radius: var(--radius-lg);
+      padding: 24px;
+      margin-bottom: 32px;
+    }
+    #featuredSection .section-title {
+      color: var(--primary);
+      font-size: 1.1rem;
+      margin-bottom: 16px;
+    }
+    #featuredGrid {
+      grid-template-columns: repeat(3, 1fr) !important;
+    }
+
+    /* ============================================
+   RESPONSIVE
+   ============================================ */
+    @media (max-width: 1024px) {
+      .products-grid {
+        grid-template-columns: repeat(3, 1fr);
+      }
+    }
+
+    @media (max-width: 768px) {
+      #featuredGrid { grid-template-columns: repeat(2, 1fr) !important; }
+      #featuredSection { padding: 16px; }
+
+
+
+      .search-bar input {
+        font-size: 16px !important;
+      }
+      .header-inner {
+        height: 58px;
+        padding: 0 12px !important;
+        gap: 8px !important;
+      }
+
+      .header-logo {
+        min-width: 0 !important;
+        flex-shrink: 1 !important;
+      }
+
+      .header-logo img {
+        max-height: 36px !important;
+        max-width: 100px !important;
+      }
+
+      .header-logo span {
+        font-size: 0.95rem !important;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        max-width: 140px;
+      }
+
+      .header-actions {
+        flex-shrink: 0 !important;
+      }
+
+      .channel-btn span {
+        display: none;
+      }
+
+      .channel-btn {
+        width: 40px !important;
+        height: 40px !important;
+        padding: 0 !important;
+        justify-content: center;
+        flex-shrink: 0 !important;
+      }
+
+      .search-toggle {
+        flex-shrink: 0 !important;
+      }
+
+      .search-bar {
+        display: none;
+      }
+
+      .search-bar.mobile-open {
+        display: block;
+        position: absolute;
+        top: 58px;
+        left: 0;
+        right: 0;
+        padding: 10px 16px;
+        background: var(--white);
+        border-bottom: 1px solid var(--gray-200);
+        max-width: 100%;
+        z-index: 99;
+      }
+
+      .search-toggle {
+        display: block;
+      }
+
+      .products-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 12px;
+      }
+
+      .banner-img {
+        height: 180px;
+      }
+
+      .banner-overlay {
+        padding: 24px;
+      }
+
+      .banner-title {
+        font-size: 1.3rem;
+      }
+
+      .modal-body {
+        grid-template-columns: 1fr !important;
+      }
+
+      .modal-left {
+        width: 100%;
+      }
+
+      .modal-gallery {
+        aspect-ratio: 4/3 !important;
+      }
+
+      .modal-details {
+        padding: 20px 16px !important;
+        max-height: none !important;
+        overflow-y: visible !important;
+      }
+
+
+
+      .modal-overlay {
+        padding: 0 !important;
+        align-items: flex-start !important;
+      }
+
+      .modal {
+        max-width: 100vw !important;
+        width: 100% !important;
+        max-height: 100vh !important;
+        height: 100vh !important;
+        border-radius: 0 !important;
+        overflow-y: auto !important;
+      }
+
+      .modal-details {
+        padding: 20px 16px !important;
+      }
+
+
+
+
+
+      .banner {
+        padding: 0 12px;
+      }
+
+      .banner-overlay {
+        padding: 20px;
+      }
+    }
+
+    @media (max-width: 480px) {
+      #featuredGrid { grid-template-columns: repeat(2, 1fr) !important; }
+      #featuredSection { padding: 14px; }
+      .products-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 10px;
+      }
+
+      .product-info {
+        padding: 10px 12px 12px;
+      }
+
+      .product-name {
+        font-size: 0.85rem;
+      }
+
+      .price-current {
+        font-size: 0.95rem;
+      }
+
+      .btn-details {
+        padding: 8px;
+        font-size: 0.8rem;
+      }
+
+      .modal-name {
+        font-size: 1.2rem;
+      }
+
+      .modal-price .price-current {
+        font-size: 1.2rem;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- Loading -->
+  <div class="loading-screen" id="loadingScreen">
+    <div class="loading-spinner"></div>
+    <div class="loading-text">Carregando achadinhos...</div>
+  </div>
+
+  <!-- Error -->
+  <div class="error-screen" id="errorScreen">
+    <h2>Ops! Não foi possível carregar a loja</h2>
+    <p>Verifique se a planilha está publicada corretamente e tente novamente.</p>
+  </div>
+
+  <div class='top-bar' id='topBar'></div>
+
+  <!-- Header -->
+  <header class="header" style="display:none" id="siteHeader">
+    <div class="header-inner">
+      <div class="header-logo" onclick="window.location.href=window.location.pathname" style="cursor:pointer">
+        <img id="headerLogo" src="" alt="Logo" style="display:none">
+        <span id="headerName"></span>
+      </div>
+      <div class="search-bar" id="searchBar">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round"
+            d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
+        </svg>
+        <input type="text" placeholder="Buscar achadinhos..." id="searchInput" oninput='filterProducts(); document.getElementById("searchClear").classList.toggle("show", this.value.length > 0);'>
+        <button type="button" class="search-clear" id="searchClear" onclick="clearSearch()" style="position:absolute;right:12px;top:50%;transform:translateY(-50%);background:var(--gray-200);border:none;width:20px;height:20px;border-radius:50%;font-size:0.7rem;color:var(--gray-600);cursor:pointer;align-items:center;justify-content:center;padding:0;line-height:1">✕</button>
+      </div>
+      <div class="header-actions">
+        <button class="search-toggle" onclick="toggleMobileSearch()">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2"
+            stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round"
+              d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
+          </svg>
+        </button>
+        <a class="channel-btn" id="channelBtn" href="#" target="_blank" rel="noopener noreferrer"></a>
+      </div>
+    </div>
+  </header>
+  <nav class="cat-nav" style="display:none" id="catNavWrap">
+    <div class="cat-nav-inner" id="catNav"></div>
+  </nav>
+  <div class="subcat-bar" id="subcatBar"></div>
+  <section class="banner" id="bannerSection"></section>
+  <main class="main" style="display:none" id="mainContent">
+    <div id='featuredSection' style='display:none;margin-bottom:32px'>
+      <div class='section-header'><h2 class='section-title'>Destaques</h2></div>
+      <div class='products-grid' id='featuredGrid'></div>
+    </div>
+    <div class="section-header">
+      <h2 class="section-title" id="sectionTitle">Todos os Achadinhos</h2>
+      <span class="product-count" id="productCount"></span>
+    </div>
+    <div class="products-grid" id="productsGrid"></div>
+  </main>
+
+  <!-- Product Modal -->
+  <div class="modal-overlay" id="productModal" onclick="if(event.target===this)closeProductModal()">
+    <div class="modal">
+      <button class="modal-close" onclick="closeProductModal()"><svg xmlns="http://www.w3.org/2000/svg" fill="none"
+          viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+        </svg></button>
+      <div class="modal-body">
+        <div class="modal-left">
+          <div class="modal-gallery"><img id="modalMainImg" src="" alt=""></div>
+          <div class="gallery-thumbs" id="galleryThumbs"></div>
+        </div>
+        <div class="modal-details">
+          <div class="modal-cat" id="modalCat"></div>
+          <h2 class="modal-name" id="modalName"></h2>
+          <div class="modal-price" id="modalPrice"></div>
+          <p class="modal-desc" id="modalDesc"></p>
+          <div id="modalCoupon"></div>
+          <div id="modalVideo"></div>
+          <button class="btn-cta" id="modalCta" onclick="ctaClick()">Ver oferta →</button>
+          <div class="price-note" id="modalPriceNote"></div>
+          <button class='btn-copy-link' id='btnCopyLink' onclick='copyProductLink()'><svg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke-width='2' stroke='currentColor'><path stroke-linecap='round' stroke-linejoin='round' d='M7.217 10.907a2.25 2.25 0 100 2.186m0-2.186c.18.324.283.696.283 1.093s-.103.77-.283 1.093m0-2.186l9.566-5.314m-9.566 7.5l9.566 5.314m0-12.814a2.25 2.25 0 103.935 2.186 2.25 2.25 0 00-3.935-2.186zm0 12.814a2.25 2.25 0 103.933-2.185 2.25 2.25 0 00-3.933 2.185z'/></svg><span id='copyLinkText'>Compartilhar</span></button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <footer class="footer" style="display:none" id="siteFooter">
+  <div class="footer-name" id="footerName"></div>
+  <div class="footer-socials" id="footerSocials"></div>
+  <div class="footer-disclosure" id="footerDisclosure"></div>
+  <div class="footer-disclosure" id="footerAvisoPrecos"></div>
+  <div class="footer-credit">
+    Feito com <a href="https://planiloja.com.br/" target="_blank" rel="noopener noreferrer">Planiloja Achadinhos</a>
+  </div>
+</footer>
+
+
+  <button class='back-to-top' id='backToTop' onclick='window.scrollTo({top:0,behavior:"smooth"})'>
+    <svg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke-width='2.5' stroke='currentColor'><path stroke-linecap='round' stroke-linejoin='round' d='M4.5 15.75l7.5-7.5 7.5 7.5'/></svg>
+  </button>
+
+  <a class='channel-float' id='channelFloat' href='#' target='_blank' rel='noopener noreferrer' title='Canal de Ofertas'></a>
+
+  <!-- Toast -->
+  <div class="toast" id="toast">
+    <img class="toast-img" id="toastImg" src="" alt="">
+    <div class="toast-content">
+      <div class="toast-title" id="toastTitle"></div>
+      <div class="toast-subtitle" id="toastSubtitle"></div>
+    </div>
+  </div>
+
+  <!-- Config (external file) -->
+  <script>document.write('<script src="config.js?_t=' + Date.now() + '"><\/script>');</script>
+
+  <script>
+    // ============================================
+    // APP ENGINE — Planiloja Achadinhos
+    // ============================================
+
+    // State
+    let CONFIG = {};
+    let PRODUCTS = [];
+    let activeCategory = "Todos";
+    let activeSubcategory = null;
+    let currentProduct = null;
+
+    // ============================================
+    // CSV PARSER
+    // ============================================
+    function parseCSV(text) {
+      const lines = [];
+      let current = '';
+      let inQuotes = false;
+      for (let i = 0; i < text.length; i++) {
+        const ch = text[i];
+        if (ch === '"') {
+          if (inQuotes && text[i + 1] === '"') { current += '"'; i++; }
+          else { inQuotes = !inQuotes; }
+        } else if (ch === ',' && !inQuotes) {
+          lines.push(current); current = '';
+        } else if ((ch === '\n' || ch === '\r') && !inQuotes) {
+          if (ch === '\r' && text[i + 1] === '\n') i++;
+          lines.push(current); current = ''; lines.push('\n');
+        } else { current += ch; }
+      }
+      if (current) lines.push(current);
+
+      const rows = [];
+      let row = [];
+      for (const token of lines) {
+        if (token === '\n') { if (row.length > 0) rows.push(row); row = []; }
+        else { row.push(token.trim()); }
+      }
+      if (row.length > 0) rows.push(row);
+      return rows;
+    }
+
+    // ============================================
+    // LOAD CONFIG FROM SHEETS
+    // ============================================
+    async function loadConfig() {
+      const res = await fetch(ACHADINHOS.planilha_configuracoes + '&_t=' + Date.now(), { cache: 'no-store' });
+      const text = await res.text();
+      const rows = parseCSV(text);
+
+      const cfg = {};
+
+      for (const row of rows) {
+        if (!row[0] && !row[1]) continue;
+        const field = (row[0] || '').replace(/[⚙️📋🎨🚚🏷️💳💡]/g, '').trim().toUpperCase();
+        const val = (row[1] || '').trim();
+
+        // Skip headers and section titles
+        if (field === 'CAMPO' || field === 'VALOR' || field === 'INSTRUÇÕES' || field === '') continue;
+        if (field.includes('CONFIGURAÇÕES') || field.includes('PREENCHA')) continue;
+        if (field.includes('DADOS DA LOJA') || field.includes('PERSONALIZAÇÃO') || field.includes('CANAL DE OFERTAS') || field.includes('AVISOS')) continue;
+
+        // Map fields
+        if (field === 'NOME DA LOJA') cfg.storeName = val;
+        else if (field === 'LOGO (URL)') cfg.logo = val;
+        else if (field === 'INSTAGRAM') cfg.instagram = val;
+        else if (field === 'FACEBOOK') cfg.facebook = val;
+        else if (field === 'TIKTOK') cfg.tiktok = val;
+        else if (field === 'PIXEL FACEBOOK') cfg.pixelFacebook = val;
+        else if (field === 'GOOGLE ANALYTICS') cfg.googleAnalytics = val;
+        else if (field === 'GOOGLE ADS') cfg.googleAds = val;
+        else if (field === 'COR PRIMÁRIA' || field === 'COR PRIMARIA') cfg.corPrimaria = val;
+        else if (field === 'BANNER (URL)') cfg.bannerUrl = val;
+        else if (field === 'BANNER LINK') cfg.bannerLink = val;
+        else if (field === 'BANNER TAG') cfg.bannerTag = val;
+        else if (field === 'BANNER TÍTULO' || field === 'BANNER TITULO') cfg.bannerTitulo = val;
+        else if (field === 'BANNER SUBTÍTULO' || field === 'BANNER SUBTITULO') cfg.bannerSubtitulo = val;
+        else if (field === 'TITULO DO SITE' || field === 'TÍTULO DO SITE' || field === 'TITULO DA PAGINA') cfg.tituloSite = val;
+        else if (field === 'DESCRICAO DO SITE' || field === 'DESCRIÇÃO DO SITE' || field === 'META DESCRICAO' || field === 'META DESCRIÇÃO') cfg.descricaoSite = val;
+        else if (field === 'LOJA ATIVA') cfg.lojaAtiva = val.toUpperCase() !== 'NÃO' && val.toUpperCase() !== 'NAO';
+        else if (field === 'MENSAGEM MANUTENCAO' || field === 'MENSAGEM MANUTENÇÃO' || field === 'MENSAGEM MANUTENÇAO') cfg.msgManutencao = val;
+        else if (field === 'MENSAGEM TOPO' || field === 'BARRA TOPO') cfg.mensagemTopo = val;
+        else if (field === 'COR BARRA TOPO' || field === 'COR MENSAGEM TOPO') cfg.corBarraTopo = val;
+        else if (field === 'CNPJ') cfg.cnpj = val;
+        else if (field === 'ENDERECO' || field === 'ENDEREÇO' || field === 'ENDERECO DA LOJA' || field === 'ENDEREÇO DA LOJA') cfg.endereco = val;
+        else if (field === 'EMAIL' || field === 'EMAIL DE CONTATO') cfg.email = val;
+        // Novos campos — Achadinhos
+        else if (field === 'CANAL WHATSAPP') cfg.canalWhatsapp = val;
+        else if (field === 'CANAL TELEGRAM') cfg.canalTelegram = val;
+        else if (field === 'BOTÃO CANAL FLUTUANTE' || field === 'BOTAO CANAL FLUTUANTE') cfg.botaoCanalFlutuante = val.toUpperCase() === 'SIM';
+        else if (field === 'TEXTO DISCLOSURE') cfg.textoDisclosure = val;
+        else if (field === 'AVISO PREÇOS' || field === 'AVISO PRECOS') cfg.avisoPrecos = val;
+      }
+
+      // Textos padrão (fallback)
+      if (!cfg.textoDisclosure) cfg.textoDisclosure = 'Este site participa de programas de afiliados e pode receber comissão pelas compras realizadas nos links, sem custo adicional para você.';
+      if (!cfg.avisoPrecos) cfg.avisoPrecos = 'Preços e disponibilidade sujeitos a alteração. Confirme na loja parceira.';
+      CONFIG = cfg;
+    }
+
+    // ============================================
+    // LOAD CATÁLOGO FROM SHEETS
+    // ============================================
+    async function loadCatalogo() {
+      const res = await fetch(ACHADINHOS.planilha_catalogo + '&_t=' + Date.now(), { cache: 'no-store' });
+      const text = await res.text();
+      const rows = parseCSV(text);
+
+      const products = [];
+      for (const row of rows) {
+        const first = (row[0] || '').trim().toUpperCase();
+        // Skip headers, instructions, title rows
+        if (!first || first === 'ATIVO' || first === 'ATIVO *' || first === 'SIM OU NÃO' || first.includes('CATÁLOGO') || first.includes('CATALOGO') || first.includes('CADA LINHA') || first.includes('DICAS')) continue;
+        if (first !== 'SIM') continue;
+
+        products.push({
+          ativo: true,
+          tipo: ((row[1] || '').trim().toUpperCase() === 'DIGITAL') ? 'DIGITAL' : 'FISICO',
+          plataforma: (row[2] || '').trim(),
+          categoria: (row[3] || '').trim(),
+          subcategoria: (row[4] || '').trim(),
+          nome: (row[5] || '').trim(),
+          descricao: (row[6] || '').trim(),
+          preco: parsePrecoBR(row[7]),
+          precoPromo: row[8] ? (parsePrecoBR(row[8]) || null) : null,
+          cupom: (row[9] || '').trim(),
+          validade: parseDataBR(row[10]),
+          linkAfiliado: (row[11] || '').trim(),
+          textoBotao: (row[12] || '').trim(),
+          video: (row[13] || '').trim(),
+          img1: fixImg((row[14] || '').trim()),
+          img2: fixImg((row[15] || '').trim()),
+          img3: fixImg((row[16] || '').trim()),
+          img4: fixImg((row[17] || '').trim()),
+          ordem: parseInt(row[18]) || 9999,
+          destaque: row.length > 19 && (row[19] || '').trim().toUpperCase() === 'SIM',
+        });
+      }
+      // Produto válido = Nome + Link de Afiliado + oferta dentro da validade
+      PRODUCTS = products.filter(p => p.nome && p.linkAfiliado && ofertaValida(p));
+    }
+
+    function parseDataBR(val) {
+      var s = (val || '').trim();
+      if (!s) return null;
+      var m = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})/);
+      if (!m) return null;
+      var d = new Date(parseInt(m[3], 10), parseInt(m[2], 10) - 1, parseInt(m[1], 10), 23, 59, 59);
+      return isNaN(d.getTime()) ? null : d;
+    }
+
+    function ofertaValida(p) {
+      // Sem validade = sempre válido; com validade = válido até 23h59 da data
+      if (!p.validade) return true;
+      return new Date() <= p.validade;
+    }
+
+    function ofertaExpiraEmBreve(p) {
+      if (!p.validade) return false;
+      var diff = p.validade.getTime() - Date.now();
+      return diff > 0 && diff <= 48 * 60 * 60 * 1000;
+    }
+
+    // ============================================
+    // APPLY CONFIG TO UI
+    // ============================================
+    function applyConfig() {
+      // Title
+      document.title = CONFIG.tituloSite || (CONFIG.storeName ? CONFIG.storeName + ' — Achadinhos' : 'Achadinhos');
+      if (CONFIG.descricaoSite) {
+        var metaDesc = document.querySelector('meta[name="description"]');
+        if (!metaDesc) { metaDesc = document.createElement('meta'); metaDesc.name = 'description'; document.head.appendChild(metaDesc); }
+        metaDesc.content = CONFIG.descricaoSite;
+      }
+      // Open Graph para compartilhamento em redes sociais
+      var ogTitle = document.querySelector('meta[property="og:title"]');
+      if (!ogTitle) { ogTitle = document.createElement('meta'); ogTitle.setAttribute('property', 'og:title'); document.head.appendChild(ogTitle); }
+      ogTitle.content = CONFIG.tituloSite || CONFIG.storeName || 'Achadinhos';
+      if (CONFIG.descricaoSite) {
+        var ogDesc = document.querySelector('meta[property="og:description"]');
+        if (!ogDesc) { ogDesc = document.createElement('meta'); ogDesc.setAttribute('property', 'og:description'); document.head.appendChild(ogDesc); }
+        ogDesc.content = CONFIG.descricaoSite;
+      }
+      if (CONFIG.bannerUrl) {
+        var ogImg = document.querySelector('meta[property="og:image"]');
+        if (!ogImg) { ogImg = document.createElement('meta'); ogImg.setAttribute('property', 'og:image'); document.head.appendChild(ogImg); }
+        ogImg.content = fixImg(CONFIG.bannerUrl);
+      }
+      var ogType = document.querySelector('meta[property="og:type"]');
+      if (!ogType) { ogType = document.createElement('meta'); ogType.setAttribute('property', 'og:type'); document.head.appendChild(ogType); }
+      ogType.content = 'website';
+      document.getElementById('headerName').textContent = CONFIG.storeName || 'Minha Loja';
+      document.getElementById('footerName').textContent = CONFIG.storeName || 'Minha Loja';
+
+      // Logo
+      if (CONFIG.logo) {
+        const logo = document.getElementById('headerLogo');
+        logo.src = fixImg(CONFIG.logo);
+        logo.style.display = 'block';
+        logo.onerror = function () { this.style.display = 'none'; };
+      }
+      if (CONFIG.logo) {
+        var favicon = document.querySelector('link[rel="icon"]');
+        if (!favicon) {
+          favicon = document.createElement('link');
+          favicon.rel = 'icon';
+          document.head.appendChild(favicon);
+        }
+        favicon.href = fixImg(CONFIG.logo);
+      }
+
+      // Colors
+      // Resolve primary color (name or hex)
+      if (CONFIG.corPrimaria) {
+        var primaryHex = nameToHex(CONFIG.corPrimaria) || CONFIG.corPrimaria;
+        document.documentElement.style.setProperty('--primary', primaryHex);
+        var hex = primaryHex.replace('#', '');
+        var r = parseInt(hex.substr(0, 2), 16) || 42;
+        var g = parseInt(hex.substr(2, 2), 16) || 92;
+        var b = parseInt(hex.substr(4, 2), 16) || 63;
+        document.documentElement.style.setProperty('--primary-rgb', r + ', ' + g + ', ' + b);
+        document.documentElement.style.setProperty('--primary-light', 'rgba(' + r + ', ' + g + ', ' + b + ', 0.08)');
+        document.documentElement.style.setProperty('--primary-hover', 'rgb(' + Math.max(0,r-20) + ', ' + Math.max(0,g-20) + ', ' + Math.max(0,b-20) + ')');
+        // Auto-generate secondary (dark version of primary)
+        var secondaryHex = darkenColor(primaryHex, 0.18);
+        document.documentElement.style.setProperty('--secondary', secondaryHex);
+        var sr = parseInt(secondaryHex.replace('#','').substr(0,2), 16);
+        var sg = parseInt(secondaryHex.replace('#','').substr(2,2), 16);
+        var sb = parseInt(secondaryHex.replace('#','').substr(4,2), 16);
+        document.documentElement.style.setProperty('--secondary-hover', 'rgb(' + Math.max(0,sr-15) + ',' + Math.max(0,sg-15) + ',' + Math.max(0,sb-15) + ')');
+        document.documentElement.style.setProperty('--secondary-light', 'rgba(' + sr + ',' + sg + ',' + sb + ',0.08)');
+        CONFIG.corSecundaria = secondaryHex;
+      }
+
+      // Banner
+      if (CONFIG.bannerUrl) {
+        const banner = document.getElementById('bannerSection');
+        const hasLink = CONFIG.bannerLink;
+        let overlayHTML = '';
+        if (CONFIG.bannerTag || CONFIG.bannerTitulo || CONFIG.bannerSubtitulo) {
+          overlayHTML = `<div class="banner-overlay">
+        ${CONFIG.bannerTag ? `<div class="banner-tag">${CONFIG.bannerTag}</div>` : ''}
+        ${CONFIG.bannerTitulo ? `<div class="banner-title">${CONFIG.bannerTitulo}</div>` : ''}
+        ${CONFIG.bannerSubtitulo ? `<div class="banner-sub">${CONFIG.bannerSubtitulo}</div>` : ''}
+      </div>`;
+        }
+        let wrapperOpen, wrapperClose;
+        if (hasLink && hasLink.startsWith('http')) {
+          wrapperOpen = `<a href="${hasLink}" class="banner-wrap">`;
+          wrapperClose = `</a>`;
+        } else if (hasLink) {
+          wrapperOpen = `<div class="banner-wrap" style="cursor:pointer" onclick="bannerFilter('${hasLink.replace(/'/g, "\\'")}')">`;
+          wrapperClose = `</div>`;
+        } else {
+          wrapperOpen = `<div class="banner-wrap">`;
+          wrapperClose = `</div>`;
+        }
+        banner.innerHTML = `${wrapperOpen}
+      <img class="banner-img" src="${fixImg(CONFIG.bannerUrl)}" alt="Banner" onerror="this.parentElement.parentElement.style.display='none'">
+      ${overlayHTML}
+    ${wrapperClose}`;
+        banner.classList.add('show');
+      }
+
+      // Footer socials
+      const socials = document.getElementById('footerSocials');
+      let socialsHTML = '';
+      if (CONFIG.canalWhatsapp) socialsHTML += '<a href="' + CONFIG.canalWhatsapp + '" target="_blank" title="Canal de Ofertas no WhatsApp"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg></a>';
+      if (CONFIG.canalTelegram) socialsHTML += '<a href="' + CONFIG.canalTelegram + '" target="_blank" title="Canal no Telegram"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M9.78 18.65l.28-4.23 7.68-6.92c.34-.31-.07-.46-.52-.19L7.74 13.3 3.64 12c-.88-.25-.89-.86.2-1.3l15.97-6.16c.73-.33 1.43.18 1.15 1.3l-2.72 12.81c-.19.91-.74 1.13-1.5.71L12.6 16.3l-1.99 1.93c-.23.23-.42.42-.83.42z"/></svg></a>';
+      if (CONFIG.instagram) socialsHTML += `<a href="https://instagram.com/${CONFIG.instagram.replace('@', '')}" target="_blank" title="Instagram"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24c3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm6.406-11.845a1.44 1.44 0 100 2.881 1.44 1.44 0 000-2.881z"/></svg></a>`;
+      if (CONFIG.facebook) socialsHTML += `<a href="https://${CONFIG.facebook.replace('https://', '')}" target="_blank" title="Facebook"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg></a>`;
+      if (CONFIG.tiktok) socialsHTML += `<a href="https://tiktok.com/${CONFIG.tiktok.replace('@', '')}" target="_blank" title="TikTok"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12.525.02c1.31-.02 2.61-.01 3.91-.02.08 1.53.63 3.09 1.75 4.17 1.12 1.11 2.7 1.62 4.24 1.79v4.03c-1.44-.05-2.89-.35-4.2-.97-.57-.26-1.1-.59-1.62-.93-.01 2.92.01 5.84-.02 8.75-.08 1.4-.54 2.79-1.35 3.94-1.31 1.92-3.58 3.17-5.91 3.21-1.43.08-2.86-.31-4.08-1.03-2.02-1.19-3.44-3.37-3.65-5.71-.02-.5-.03-1-.01-1.49.18-1.9 1.12-3.72 2.58-4.96 1.66-1.44 3.98-2.13 6.15-1.72.02 1.48-.04 2.96-.04 4.44-.99-.32-2.15-.23-3.02.37-.63.41-1.11 1.04-1.36 1.75-.21.51-.15 1.07-.14 1.61.24 1.64 1.82 3.02 3.5 2.87 1.12-.01 2.19-.66 2.77-1.61.19-.33.4-.67.41-1.06.1-1.79.06-3.57.07-5.36.01-4.03-.01-8.05.02-12.07z"/></svg></a>`;
+      socials.innerHTML = socialsHTML;
+
+      var footerInfo = '';
+      if (CONFIG.endereco) footerInfo += '<div style="font-size:0.8rem;color:var(--gray-400);margin-bottom:4px">' + CONFIG.endereco + '</div>';
+      if (CONFIG.cnpj) footerInfo += '<div style="font-size:0.8rem;color:var(--gray-500);margin-bottom:4px">CNPJ: ' + CONFIG.cnpj + '</div>';
+      if (CONFIG.email) footerInfo += '<div style="font-size:0.8rem;margin-bottom:4px"><a href="mailto:' + CONFIG.email + '" style="color:var(--gray-400);text-decoration:underline">' + CONFIG.email + '</a></div>';
+      if (footerInfo) {
+        var infoDiv = document.createElement('div');
+        infoDiv.style.marginBottom = '16px';
+        infoDiv.innerHTML = footerInfo;
+        var creditEl = document.querySelector('.footer-credit');
+        creditEl.parentNode.insertBefore(infoDiv, creditEl);
+      }
+
+      var footerEl = document.getElementById('siteFooter');
+      var footerBg = CONFIG.corSecundaria || '#1B1B1B';
+      footerEl.style.background = footerBg;
+      var light = isLightColor(footerBg);
+      var textMain = light ? '#1B1B1B' : '#FFFFFF';
+      var textMuted = light ? 'rgba(0,0,0,0.6)' : 'rgba(255,255,255,0.5)';
+      var textLight = light ? 'rgba(0,0,0,0.4)' : 'rgba(255,255,255,0.35)';
+      var iconBg = light ? 'rgba(0,0,0,0.1)' : 'rgba(255,255,255,0.15)';
+      var iconColor = light ? 'rgba(0,0,0,0.6)' : 'rgba(255,255,255,0.7)';
+      document.querySelector('.footer-name').style.color = textMain;
+      document.querySelector('.footer-credit').style.color = textLight;
+      var socialLinks = document.querySelectorAll('.footer-socials a');
+      socialLinks.forEach(function(a) {
+        a.style.background = iconBg;
+        a.style.color = iconColor;
+        a.addEventListener('mouseenter', function() { this.style.background = 'var(--primary)'; this.style.color = '#FFFFFF'; });
+        a.addEventListener('mouseleave', function() { this.style.background = iconBg; this.style.color = iconColor; });
+      });
+      footerEl.style.color = textMuted;
+      var footerDivs = footerEl.querySelectorAll('div[style*=font-size]');
+      footerDivs.forEach(function(div) {
+        if (div.querySelector('a[href^=mailto]')) {
+          div.querySelector('a').style.color = light ? 'rgba(0,0,0,0.5)' : 'rgba(255,255,255,0.5)';
+        } else {
+          div.style.color = textMuted;
+        }
+      });
+
+      // Canal de ofertas (header + botão flutuante)
+      setupChannel();
+
+      // Disclosure de afiliado + aviso de preços (footer)
+      document.getElementById('footerDisclosure').textContent = CONFIG.textoDisclosure || '';
+      document.getElementById('footerAvisoPrecos').textContent = CONFIG.avisoPrecos || '';
+
+      // Show UI
+      installPixels();
+      if (CONFIG.mensagemTopo) {
+        var topBar = document.getElementById('topBar');
+        topBar.textContent = CONFIG.mensagemTopo;
+        if (CONFIG.corBarraTopo) {
+          topBar.style.background = CONFIG.corBarraTopo;
+        }
+        topBar.classList.add('show');
+      }
+      document.getElementById('siteHeader').style.display = '';
+      document.getElementById('catNavWrap').style.display = '';
+      document.getElementById('mainContent').style.display = '';
+      document.getElementById('siteFooter').style.display = '';
+    }
+
+    // ============================================
+    // CATEGORIES & PRODUCTS RENDERING
+    // ============================================
+    function getCategories() {
+      return ["Todos", ...new Set(PRODUCTS.map(p => p.categoria).filter(Boolean))];
+    }
+    function getSubcategories(cat) {
+      return [...new Set(PRODUCTS.filter(p => p.categoria === cat && p.subcategoria).map(p => p.subcategoria))];
+    }
+    function buildCategoryNav() {
+      document.getElementById("catNav").innerHTML = getCategories().map(c =>
+        `<button class="cat-btn ${c === activeCategory ? 'active' : ''}" onclick="selectCategory('${c.replace(/'/g, "\\'")}')">${c}</button>`
+      ).join("");
+    }
+    function selectCategory(cat) {
+      activeCategory = cat; activeSubcategory = null;
+      buildCategoryNav(); buildSubcategoryBar(); renderProducts();
+    }
+    function buildSubcategoryBar() {
+      const bar = document.getElementById("subcatBar");
+      if (activeCategory === "Todos") { bar.classList.remove("show"); return; }
+      const subs = getSubcategories(activeCategory);
+      if (!subs.length) { bar.classList.remove("show"); return; }
+      bar.classList.add("show");
+      bar.innerHTML = `<button class="subcat-btn ${!activeSubcategory ? 'active' : ''}" onclick="selectSubcategory(null)">Todos</button>` +
+        subs.map(s => `<button class="subcat-btn ${activeSubcategory === s ? 'active' : ''}" onclick="selectSubcategory('${s.replace(/'/g, "\\'")}')">${s}</button>`).join("");
+    }
+    function selectSubcategory(sub) { activeSubcategory = sub; buildSubcategoryBar(); renderProducts(); }
+
+    function getFilteredProducts() {
+      let prods = PRODUCTS.filter(p => p.ativo);
+      const search = (document.getElementById("searchInput")?.value || "").toLowerCase();
+      if (search) prods = prods.filter(p => p.nome.toLowerCase().includes(search) || p.descricao.toLowerCase().includes(search));
+      if (activeCategory !== "Todos") prods = prods.filter(p => p.categoria === activeCategory);
+      if (activeSubcategory) prods = prods.filter(p => p.subcategoria === activeSubcategory);
+      prods.sort((a, b) => a.ordem - b.ordem);
+      return prods;
+    }
+    function filterProducts() { renderProducts(); }
+
+    function productCardHTML(p) {
+      var idx = PRODUCTS.indexOf(p);
+      var hasPromo = p.precoPromo && p.precoPromo > 0 && p.preco > 0 && p.precoPromo < p.preco;
+      var priceHTML = '';
+      if (p.preco > 0) {
+        var prefixo = p.tipo !== 'DIGITAL' ? '<span style="font-size:0.72rem;font-weight:500;color:var(--text-muted)">a partir de </span>' : '';
+        priceHTML = '<div class="product-price"><span class="price-current">' + prefixo + 'R$ ' + fp(hasPromo ? p.precoPromo : p.preco) + '</span>' + (hasPromo ? '<span class="price-old">R$ ' + fp(p.preco) + '</span>' : '') + '</div>';
+      }
+      return '<div class="product-card" onclick="openProductModal(' + idx + ')">' +
+        '<div class="product-img-wrap"><img src="' + p.img1 + '" alt="' + p.nome + '" loading="lazy" onerror="handleImgError(this)">' +
+        (hasPromo ? '<span class="badge-promo">-' + Math.round((1 - p.precoPromo / p.preco) * 100) + '%</span>' : '') +
+        (p.plataforma ? '<span class="badge-platform">' + p.plataforma + '</span>' : '') +
+        (ofertaExpiraEmBreve(p) ? '<span class="badge-limited">Oferta por tempo limitado</span>' : '') +
+        '</div>' +
+        '<div class="product-info">' +
+        '<div class="product-cat">' + p.categoria + (p.subcategoria ? ' · ' + p.subcategoria : '') + '</div>' +
+        '<div class="product-name">' + p.nome + '</div>' +
+        priceHTML +
+        '<button class="btn-details">Ver Detalhes</button>' +
+        '</div></div>';
+    }
+
+    function renderProducts() {
+      var featuredSection = document.getElementById('featuredSection');
+      var featuredGrid = document.getElementById('featuredGrid');
+      var searchVal = document.getElementById('searchInput') ? document.getElementById('searchInput').value : '';
+      if (activeCategory === 'Todos' && !activeSubcategory && !searchVal) {
+        var featured = PRODUCTS.filter(function(p) { return p.ativo && p.destaque; });
+        featured.sort(function(a, b) { return a.ordem - b.ordem; });
+        if (featured.length > 0) {
+          featuredSection.style.display = 'block';
+          featuredGrid.innerHTML = featured.map(productCardHTML).join('');
+        } else { featuredSection.style.display = 'none'; }
+      } else { featuredSection.style.display = 'none'; }
+      const prods = getFilteredProducts();
+      document.getElementById("sectionTitle").textContent = activeCategory === "Todos" ? "Todos os Achadinhos" : activeCategory;
+      document.getElementById("productCount").textContent = `${prods.length} oferta${prods.length !== 1 ? 's' : ''}`;
+      const grid = document.getElementById("productsGrid");
+      if (!prods.length) {
+        grid.innerHTML = `<div class="no-results"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z"/></svg><p>Nenhum achadinho encontrado</p></div>`;
+        return;
+      }
+      grid.innerHTML = prods.map(productCardHTML).join("");
+    }
+
+    // ============================================
+    // PRODUCT MODAL
+    // ============================================
+    function openProductModal(idx) {
+      var toastEl = document.getElementById('toast');
+      toastEl.classList.remove('show');
+      clearTimeout(window._toastTimer);
+      currentProduct = PRODUCTS[idx];
+      const imgs = [currentProduct.img1, currentProduct.img2, currentProduct.img3, currentProduct.img4].filter(Boolean);
+      document.getElementById("modalMainImg").src = imgs[0] || '';
+      document.getElementById('modalMainImg').onerror = function() { handleImgError(this); };
+      document.getElementById("galleryThumbs").innerHTML = imgs.length > 1 ? imgs.map((img, i) =>
+        `<div class="gallery-thumb ${i === 0 ? 'active' : ''}" onclick="switchImage('${img}', this)"><img src="${img}" alt=""></div>`
+      ).join("") : "";
+      // Badge de plataforma + tipo no topo
+      var catParts = [];
+      if (currentProduct.plataforma) catParts.push(currentProduct.plataforma);
+      if (currentProduct.tipo === 'DIGITAL') catParts.push('Digital');
+      var catText = currentProduct.categoria + (currentProduct.subcategoria ? ' · ' + currentProduct.subcategoria : '');
+      if (catText) catParts.push(catText);
+      document.getElementById("modalCat").textContent = catParts.join(' · ');
+      document.getElementById("modalName").textContent = currentProduct.nome;
+      const hasPromo = currentProduct.precoPromo && currentProduct.precoPromo > 0 && currentProduct.preco > 0 && currentProduct.precoPromo < currentProduct.preco;
+      var priceEl = document.getElementById('modalPrice');
+      if (currentProduct.preco > 0) {
+        var prefixo = currentProduct.tipo !== 'DIGITAL' ? '<span style="font-size:0.85rem;font-weight:500;color:var(--text-muted)">a partir de </span>' : '';
+        priceEl.style.display = '';
+        priceEl.innerHTML = prefixo + '<span class="price-current">R$ ' + fp(hasPromo ? currentProduct.precoPromo : currentProduct.preco) + '</span>' + (hasPromo ? '<span class="price-old">R$ ' + fp(currentProduct.preco) + '</span>' : '');
+      } else {
+        priceEl.style.display = 'none';
+        priceEl.innerHTML = '';
+      }
+      document.getElementById("modalDesc").textContent = currentProduct.descricao;
+      // Cupom (com botão copiar)
+      document.getElementById('modalCoupon').innerHTML = currentProduct.cupom
+        ? '<div class="coupon-box"><div><div class="coupon-label">Cupom de desconto</div><div class="coupon-code">' + currentProduct.cupom + '</div></div><button class="coupon-copy" id="btnCopyCoupon" onclick="copyCoupon()">Copiar cupom</button></div>'
+        : '';
+      // Vídeo (YouTube embed)
+      var embedUrl = ytEmbed(currentProduct.video);
+      document.getElementById('modalVideo').innerHTML = embedUrl
+        ? '<div class="video-embed"><iframe src="' + embedUrl + '" title="Vídeo do produto" loading="lazy" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe></div>'
+        : '';
+      // CTA de saída
+      document.getElementById('modalCta').textContent = ctaLabel(currentProduct);
+      // Aviso de preços (apenas se o produto exibir preço)
+      var note = document.getElementById('modalPriceNote');
+      note.textContent = CONFIG.avisoPrecos || '';
+      note.classList.toggle('show', currentProduct.preco > 0);
+      document.getElementById("productModal").classList.add("open");
+      document.body.style.overflow = "hidden";
+      document.body.classList.add('modal-open');
+      trackEvent('ViewContent', { name: currentProduct.nome, value: hasPromo ? currentProduct.precoPromo : currentProduct.preco });
+    }
+    function closeProductModal() {
+      document.getElementById('productModal').classList.remove('open');
+      document.body.style.overflow = '';
+      document.body.classList.remove('modal-open');
+    }
+    function switchImage(src, el) { document.getElementById("modalMainImg").src = src; document.querySelectorAll(".gallery-thumb").forEach(t => t.classList.remove("active")); el.classList.add("active"); }
+    // ============================================
+    // AÇÕES DE AFILIADO (CTA, CUPOM, VÍDEO, CANAL)
+    // ============================================
+    function ctaLabel(p) {
+      if (p.textoBotao) return p.textoBotao;
+      if (p.tipo === 'DIGITAL') return 'Quero conhecer →';
+      return p.plataforma ? 'Ver oferta na ' + p.plataforma + ' →' : 'Ver oferta →';
+    }
+
+    function ctaClick() {
+      if (!currentProduct) return;
+      var hasPromo = currentProduct.precoPromo && currentProduct.precoPromo > 0 && currentProduct.preco > 0 && currentProduct.precoPromo < currentProduct.preco;
+      registrarClique(currentProduct);
+      trackEvent('ClickOferta', { name: currentProduct.nome, value: hasPromo ? currentProduct.precoPromo : currentProduct.preco });
+      try {
+        salvarClique(currentProduct.nome, currentProduct.categoria, currentProduct.plataforma);
+      } catch(err) {}
+      window.open(currentProduct.linkAfiliado, '_blank');
+    }
+
+    function copyCoupon() {
+      if (!currentProduct || !currentProduct.cupom) return;
+      var code = currentProduct.cupom;
+      function done() {
+        var btn = document.getElementById('btnCopyCoupon');
+        if (btn) {
+          btn.textContent = 'Copiado!';
+          setTimeout(function() { btn.textContent = 'Copiar cupom'; }, 2500);
+        }
+        trackEvent('CopiaCupom', { name: currentProduct.nome });
+      }
+      navigator.clipboard.writeText(code).then(done).catch(function() {
+        var t = document.createElement('textarea');
+        t.value = code;
+        document.body.appendChild(t);
+        t.select();
+        document.execCommand('copy');
+        document.body.removeChild(t);
+        done();
+      });
+    }
+
+    function ytEmbed(url) {
+      if (!url) return '';
+      var m = url.match(/(?:youtube\.com\/(?:watch\?v=|shorts\/|embed\/|live\/)|youtu\.be\/)([A-Za-z0-9_-]{6,})/);
+      return m ? 'https://www.youtube.com/embed/' + m[1] : '';
+    }
+
+    function registrarClique(p) {
+      if (typeof ACHADINHOS === 'undefined' || !ACHADINHOS.registrar_cliques) return;
+      try {
+        var utms = [];
+        var params = new URLSearchParams(window.location.search);
+        params.forEach(function(v, k) { if (k.toLowerCase().indexOf('utm_') === 0) utms.push(k + '=' + v); });
+        var origem = [document.referrer, utms.join('&')].filter(Boolean).join(' | ');
+        var dados = {
+          dataHora: new Date().toLocaleString('pt-BR'),
+          produto: p.nome,
+          plataforma: p.plataforma,
+          tipo: p.tipo,
+          categoria: p.categoria,
+          origem: origem
+        };
+        var url = ACHADINHOS.registrar_cliques + '?data=' + encodeURIComponent(JSON.stringify(dados));
+        fetch(url, { mode: 'no-cors' });
+      } catch (err) {
+        console.log('Erro ao registrar clique:', err);
+      }
+    }
+
+    function getChannelUrl() {
+      return CONFIG.canalWhatsapp || CONFIG.canalTelegram || '';
+    }
+
+    function setupChannel() {
+      var url = getChannelUrl();
+      if (!url) return;
+      var isTelegram = !CONFIG.canalWhatsapp && !!CONFIG.canalTelegram;
+      var iconWa = '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>';
+      var iconTg = '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M9.78 18.65l.28-4.23 7.68-6.92c.34-.31-.07-.46-.52-.19L7.74 13.3 3.64 12c-.88-.25-.89-.86.2-1.3l15.97-6.16c.73-.33 1.43.18 1.15 1.3l-2.72 12.81c-.19.91-.74 1.13-1.5.71L12.6 16.3l-1.99 1.93c-.23.23-.42.42-.83.42z"/></svg>';
+      var icon = isTelegram ? iconTg : iconWa;
+      var btn = document.getElementById('channelBtn');
+      btn.href = url;
+      btn.innerHTML = icon + '<span>Canal de Ofertas</span>';
+      btn.classList.toggle('telegram', isTelegram);
+      btn.classList.add('show');
+      if (CONFIG.botaoCanalFlutuante) {
+        var f = document.getElementById('channelFloat');
+        f.href = url;
+        f.innerHTML = icon;
+        f.classList.toggle('telegram', isTelegram);
+        f.classList.add('show');
+        document.body.classList.add('has-channel-float');
+      }
+    }
+
+    // ============================================
+    // HELPERS
+    // ============================================
+    function salvarClique(produto, categoria, plataforma) {
+      if (!ACHADINHOS.registrar_cliques) return;
+
+      if (!window._cliquesRegistrados) window._cliquesRegistrados = {};
+      var chave = produto + '_' + plataforma;
+      var agora = Date.now();
+      if (window._cliquesRegistrados[chave] && (agora - window._cliquesRegistrados[chave]) < 300000) {
+        return;
+      }
+      window._cliquesRegistrados[chave] = agora;
+
+      try {
+        var dados = {
+          dataHora: new Date().toLocaleString('pt-BR'),
+          produto: produto,
+          categoria: categoria,
+          plataforma: plataforma
+        };
+        var img = new Image();
+        img.src = ACHADINHOS.registrar_cliques + '?data=' + encodeURIComponent(JSON.stringify(dados));
+      } catch (err) {}
+    }
+    function clearSearch() {
+      var input = document.getElementById('searchInput');
+      input.value = '';
+      filterProducts();
+      document.getElementById('searchClear').classList.remove('show');
+      input.focus();
+    }
+    document.addEventListener('click', function(e) {
+      var searchBar = document.getElementById('searchBar');
+      var searchToggle = document.querySelector('.search-toggle');
+      if (searchBar && searchBar.classList.contains('mobile-open')) {
+        if (!searchBar.contains(e.target) && !searchToggle.contains(e.target)) {
+          searchBar.classList.remove('mobile-open');
+        }
+      }
+    });
+    function nameToHex(name) {
+      var paletas = {
+        'azul': '#2563EB',
+        'verde': '#2A5C3F',
+        'vermelho': '#DC2626',
+        'roxo': '#7C3AED',
+        'rosa': '#DB2777',
+        'laranja': '#EA580C',
+        'dourado': '#B8860B',
+        'preto': '#1B1B1B',
+        'marrom': '#78350F',
+        'turquesa': '#0D9488'
+      };
+      return paletas[name.toLowerCase().trim()] || null;
+    }
+    function darkenColor(hex, factor) {
+      hex = hex.replace('#', '');
+      if (hex.length === 3) hex = hex[0]+hex[0]+hex[1]+hex[1]+hex[2]+hex[2];
+      var r = Math.round(parseInt(hex.substr(0, 2), 16) * factor);
+      var g = Math.round(parseInt(hex.substr(2, 2), 16) * factor);
+      var b = Math.round(parseInt(hex.substr(4, 2), 16) * factor);
+      return '#' + ('0'+r.toString(16)).slice(-2) + ('0'+g.toString(16)).slice(-2) + ('0'+b.toString(16)).slice(-2);
+    }
+    function isLightColor(hex) {
+      hex = hex.replace('#', '');
+      if (hex.length === 3) hex = hex[0]+hex[0]+hex[1]+hex[1]+hex[2]+hex[2];
+      var r = parseInt(hex.substr(0, 2), 16);
+      var g = parseInt(hex.substr(2, 2), 16);
+      var b = parseInt(hex.substr(4, 2), 16);
+      var luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+      return luminance > 0.55;
+    }
+    function handleImgError(img) {
+      var parent = img.parentElement;
+      var div = document.createElement('div');
+      div.style.cssText = 'width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;background:#f0eeea;color:#a8a49c;gap:8px';
+      div.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" fill="none" viewBox="0 0 24 24" stroke-width="1" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909M6.75 7.5a.75.75 0 11-1.5 0 .75.75 0 011.5 0z"/></svg><span style="font-size:0.75rem;font-weight:500">Sem foto</span>';
+      parent.replaceChild(div, img);
+    }
+
+    function toSlug(text) {
+      return text.toLowerCase()
+        .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/^-+|-+$/g, '');
+    }
+    function copyProductLink() {
+      if (!currentProduct) return;
+      var slug = toSlug(currentProduct.nome);
+      var url = window.location.origin + window.location.pathname + '?produto=' + slug;
+      navigator.clipboard.writeText(url).then(function() {
+        var btn = document.getElementById('btnCopyLink');
+        var txt = document.getElementById('copyLinkText');
+        btn.classList.add('copied');
+        txt.textContent = 'Link Copiado!';
+        setTimeout(function() {
+          btn.classList.remove('copied');
+          txt.textContent = 'Compartilhar';
+        }, 2500);
+      }).catch(function() {
+        var textarea = document.createElement('textarea');
+        textarea.value = window.location.origin + window.location.pathname + '?produto=' + toSlug(currentProduct.nome);
+        document.body.appendChild(textarea);
+        textarea.select();
+        document.execCommand('copy');
+        document.body.removeChild(textarea);
+        var btn = document.getElementById('btnCopyLink');
+        var txt = document.getElementById('copyLinkText');
+        btn.classList.add('copied');
+        txt.textContent = 'Link Copiado!';
+        setTimeout(function() {
+          btn.classList.remove('copied');
+          txt.textContent = 'Compartilhar';
+        }, 2500);
+      });
+    }
+    function installPixels() {
+      // Facebook Pixel
+      if (CONFIG.pixelFacebook) {
+        const fb = document.createElement('script');
+        fb.textContent = "!function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];t=b.createElement(e);t.async=!0;t.src=v;s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)}(window,document,'script','https://connect.facebook.net/en_US/fbevents.js');fbq('init','" + CONFIG.pixelFacebook + "');fbq('track','PageView');";
+        document.head.appendChild(fb);
+      }
+      // Google Analytics
+      if (CONFIG.googleAnalytics) {
+        const gaScript = document.createElement('script');
+        gaScript.async = true;
+        gaScript.src = 'https://www.googletagmanager.com/gtag/js?id=' + CONFIG.googleAnalytics;
+        document.head.appendChild(gaScript);
+        const gaInit = document.createElement('script');
+        gaInit.textContent = "window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments)}gtag('js',new Date());gtag('config','" + CONFIG.googleAnalytics + "');";
+        document.head.appendChild(gaInit);
+      }
+      // Google Ads
+      if (CONFIG.googleAds) {
+        if (!CONFIG.googleAnalytics) {
+          const adsScript = document.createElement('script');
+          adsScript.async = true;
+          adsScript.src = 'https://www.googletagmanager.com/gtag/js?id=' + CONFIG.googleAds;
+          document.head.appendChild(adsScript);
+          const adsInit = document.createElement('script');
+          adsInit.textContent = "window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments)}gtag('js',new Date());gtag('config','" + CONFIG.googleAds + "');";
+          document.head.appendChild(adsInit);
+        } else {
+          const adsConfig = document.createElement('script');
+          adsConfig.textContent = "gtag('config','" + CONFIG.googleAds + "');";
+          document.head.appendChild(adsConfig);
+        }
+      }
+    }
+
+    function trackEvent(eventName, data) {
+      // Facebook — clique de afiliado é a conversão (Lead)
+      if (CONFIG.pixelFacebook && typeof fbq !== 'undefined') {
+        if (eventName === 'ViewContent') fbq('track', 'ViewContent', { content_name: data.name, value: data.value, currency: 'BRL' });
+        else if (eventName === 'ClickOferta') fbq('track', 'Lead', { content_name: data.name, value: data.value, currency: 'BRL' });
+        else if (eventName === 'CopiaCupom') fbq('trackCustom', 'CopiaCupom', { content_name: data.name });
+      }
+      // Google Analytics
+      if (CONFIG.googleAnalytics && typeof gtag !== 'undefined') {
+        if (eventName === 'ViewContent') gtag('event', 'view_item', { currency: 'BRL', value: data.value });
+        else if (eventName === 'ClickOferta') gtag('event', 'click_oferta', { item_name: data.name, currency: 'BRL', value: data.value });
+        else if (eventName === 'CopiaCupom') gtag('event', 'copy_coupon', { item_name: data.name });
+      }
+      // Google Ads — conversão disparada no clique do CTA
+      if (CONFIG.googleAds && typeof gtag !== 'undefined') {
+        if (eventName === 'ClickOferta') gtag('event', 'conversion', { send_to: CONFIG.googleAds, value: data.value, currency: 'BRL' });
+      }
+    }
+
+    function bannerFilter(value) {
+      let categoria, subcategoria = null;
+      if (value.includes('>')) {
+        const parts = value.split('>');
+        categoria = parts[0].trim();
+        subcategoria = parts[1].trim();
+      } else {
+        categoria = value.trim();
+      }
+      selectCategory(categoria);
+      if (subcategoria) {
+        activeSubcategory = subcategoria;
+        buildSubcategoryBar();
+      }
+    }
+    function fixImg(url) {
+      if (!url) return '';
+      // https://drive.google.com/file/d/XXXXX/view... → direct link
+      let m = url.match(/drive\.google\.com\/file\/d\/([^\/\?]+)/);
+      if (m) return 'https://lh3.googleusercontent.com/d/' + m[1];
+      // https://drive.google.com/open?id=XXXXX → direct link
+      m = url.match(/drive\.google\.com\/open\?id=([^&]+)/);
+      if (m) return 'https://lh3.googleusercontent.com/d/' + m[1];
+      // https://drive.google.com/uc?id=XXXXX → direct link
+      m = url.match(/drive\.google\.com\/uc\?.*id=([^&]+)/);
+      if (m) return 'https://lh3.googleusercontent.com/d/' + m[1];
+      return url;
+    }
+    function fp(v) { return v.toFixed(2).replace(".", ","); }
+    function parsePrecoBR(val) {
+      var s = (val || '').trim();
+      if (!s) return 0;
+      // Se tem vírgula: formato BR (ex: 1.299,90 ou 146,90)
+      if (s.indexOf(',') !== -1) return parseFloat(s.replace(/\./g, '').replace(',', '.')) || 0;
+      // Sem vírgula: ponto é decimal (ex: 146.90) ou inteiro (ex: 146)
+      return parseFloat(s) || 0;
+    }
+    function showToast(text, priority) {
+      var el = document.getElementById('toast');
+      document.getElementById('toastImg').style.display = 'none';
+      document.getElementById('toastTitle').textContent = text;
+      document.getElementById('toastSubtitle').textContent = '';
+      if (priority) {
+        el.style.zIndex = '600';
+      } else {
+        el.style.zIndex = '';
+      }
+      el.classList.add('show');
+      clearTimeout(window._toastTimer);
+      window._toastTimer = setTimeout(function() { el.classList.remove('show'); el.style.zIndex = ''; }, 3000);
+    }
+    function toggleMobileSearch() { document.getElementById("searchBar").classList.toggle("mobile-open"); }
+
+    window.addEventListener('scroll', function() {
+      var btn = document.getElementById('backToTop');
+      if (btn) {
+        if (window.scrollY > 400) { btn.classList.add('show'); }
+        else { btn.classList.remove('show'); }
+      }
+    });
+
+    // ============================================
+    // INIT
+    // ============================================
+    async function init() {
+      try {
+        await Promise.all([loadConfig(), loadCatalogo()]);
+        if (CONFIG.lojaAtiva === false) {
+          document.getElementById('loadingScreen').classList.add('hidden');
+          document.body.innerHTML = '<div style="min-height:100vh;display:flex;align-items:center;justify-content:center;background:var(--bg);padding:20px"><div style="text-align:center;max-width:480px"><div style="width:64px;height:64px;background:rgba(42,92,63,0.08);border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 20px"><svg xmlns=\'http://www.w3.org/2000/svg\' width=\'32\' height=\'32\' fill=\'none\' viewBox=\'0 0 24 24\' stroke-width=\'1.5\' stroke=\'#2A5C3F\'><path stroke-linecap=\'round\' stroke-linejoin=\'round\' d=\'M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z\'/></svg></div><h1 style="font-family:var(--font);font-size:1.5rem;font-weight:700;color:#1B1B1B;margin-bottom:8px">' + (CONFIG.storeName || 'Nossa Loja') + '</h1><p style="font-family:var(--font);font-size:1rem;color:#6B6760;line-height:1.6;margin-bottom:24px">' + (CONFIG.msgManutencao || 'Estamos temporariamente fechados. Volte em breve!') + '</p>' + (getChannelUrl() ? '<a href="' + getChannelUrl() + '" target="_blank" style="display:inline-flex;align-items:center;gap:8px;padding:12px 24px;background:#25D366;color:white;border-radius:8px;font-family:var(--font);font-size:0.9rem;font-weight:600;text-decoration:none"><svg viewBox=\'0 0 24 24\' width=\'20\' height=\'20\' fill=\'currentColor\'><path d=\'M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z\'/></svg>Entrar no Canal de Ofertas</a>' : '') + '</div></div>';
+          return;
+        }
+        applyConfig();
+        buildCategoryNav();
+        renderProducts();
+        // Check for direct product link
+        var urlParams = new URLSearchParams(window.location.search);
+        var productSlug = urlParams.get('produto');
+        if (productSlug) {
+          var foundIndex = PRODUCTS.findIndex(function(p) {
+            return p.ativo && toSlug(p.nome) === productSlug;
+          });
+          if (foundIndex !== -1) {
+            setTimeout(function() { openProductModal(foundIndex); }, 300);
+          }
+        }
+        document.getElementById("loadingScreen").classList.add("hidden");
+        setTimeout(() => document.getElementById("loadingScreen").remove(), 500);
+      } catch (err) {
+        console.error("Planiloja Achadinhos Error:", err);
+        document.getElementById("loadingScreen").style.display = "none";
+        document.getElementById("errorScreen").classList.add("show");
+      }
+    }
+
+    init();
+  </script>
+</body>
+
+</html>
