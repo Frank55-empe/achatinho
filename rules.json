@@ -1,0 +1,11 @@
+[
+  {
+    "name": "Palavra QUERO",
+    "account": "*",
+    "media": "*",
+    "keywords": ["quero", "eu quero", "link"],
+    "match": "contains",
+    "tags": ["interessado"],
+    "reply": "Oi {{username}}! 🎉 Que bom ter você por aqui. Aqui está o que você pediu: https://seusite.com.br"
+  }
+]
