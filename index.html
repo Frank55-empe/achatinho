@@ -1460,7 +1460,7 @@ preco_original: toNum(l.preco_original),
 desconto: l.desconto || "",
 nota: toNum(l.nota) || 0,
 avaliacoes: toNum(l.avaliacoes) || 0,
-imagem: l.imagem || "https://img.usecurling.com/p/400/400?q=product",
+imagem: l.imagem || l.imagem_url || "https://img.usecurling.com/p/400/400?q=product",
 link_afiliado: l.link_afiliado || "#",
 destaque: (l.destaque || "").toLowerCase()
 })).filter(p => p.ativo === "sim").map(p => ({ ...p, descontoCalc: calcDesconto(p) }))
