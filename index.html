@@ -397,7 +397,15 @@
       var img = document.createElement("img");
       img.src = p.imagem; img.alt = p.nome; img.loading = "lazy";
       img.referrerPolicy = "no-referrer";
-      img.onerror = function () { img.remove(); };
+      img.onerror = function () {
+        var original = img.src;
+        var match = original.match(/(?:images\/I\/)([^/?]+?)(?:\._|\?)/);
+        if (match && original.indexOf("amazon") !== -1 && original.indexOf("#fallback") === -1) {
+          img.src = "https://images-na.ssl-images-amazon.com/images/I/" + match[1] + ".jpg#fallback";
+          return;
+        }
+        img.remove();
+      };
       thumb.appendChild(img);
     }
     a.appendChild(thumb);
